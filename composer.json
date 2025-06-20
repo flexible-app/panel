@@ -1,0 +1,26 @@
+{
+    "name": "flexible-app/panel",
+    "description": "Live Panel System for Laravel",
+    "type": "library",
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "FlexibleApp\\Panel\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Suleiman Sh",
+            "email": "sulieman@averotech.com"
+        }
+    ],
+    "minimum-stability": "dev",
+    "require": {},
+    "extra": {
+        "laravel": {
+            "providers": [
+                "FlexibleApp\\Panel\\PanelServiceProvider"
+            ]
+        }
+    }
+}
