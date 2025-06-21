@@ -11,13 +11,12 @@ class Panel
     public string $path = '/admin';
     public ?string $domain = null;
     public array $middleware = ['web'];
-    public array $authMiddleware = ['auth'];
     public array $assets = [];
     protected array $pages = [];
 
     public function __construct(public string $id)
     {
-        $this->name = ucfirst($id) . ' Panel';
+        $this->name = ucfirst($id);
     }
 
     public function path(string $path): static
@@ -44,12 +43,6 @@ class Panel
         return $this;
     }
 
-    public function authMiddleware(array $middleware): static
-    {
-        $this->authMiddleware = $middleware;
-        return $this;
-    }
-
     public function assets(array $assets): static
     {
         $this->assets = $assets;
@@ -61,7 +54,6 @@ class Panel
         $this->pages = [...$this->pages, ...$pages];
         return $this;
     }
-
 
     public function registerRoutes(): void
     {
@@ -75,10 +67,10 @@ class Panel
                         'name' => $this->name,
                         'path' => $this->path,
                         'domain' => $this->domain,
-                        'assets' => $this->assets,
+                        'assets' => $this->assets
                     ],
                 ]))
-                ->name("{$this->id}.dashboard");
+                ->name($this->id);
 
                 foreach ($this->pages as $page) {
                     $page::registerRoutes($this);

@@ -34,10 +34,15 @@ abstract class Page
             'navigationLabel' => static::navigationLabel(),
         ];
     }
+    
+    public static function schema(): array
+    {
+        return [];
+    }
 
     public static function registerRoutes(Panel $panel): void
     {
-        // if (!static::canAccess()) return;
+        if (!static::canAccess()) return;
 
         Route::get(static::slug(), fn () => inertia('panel', [
             'panel' => [
@@ -47,7 +52,11 @@ abstract class Page
                 'domain' => $panel->domain,
                 'assets' => $panel->assets,
             ],
+            'page' => [
+                'meta' => static::meta(),
+                'schema' => collect(static::schema())->map->toArray()->all(),
+            ],
         ]))
-        ->name("{$panel->id}." . static::slug());
+        ->name($panel->id . "." . static::slug());
     }
 }
