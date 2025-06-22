@@ -48,15 +48,22 @@ abstract class Page
             'panel' => [
                 'id' => $panel->id,
                 'name' => $panel->name,
-                'path' => $panel->path . '/' . static::slug(),
+                'path' => $panel->path,
                 'domain' => $panel->domain,
                 'assets' => $panel->assets,
             ],
             'page' => [
+                'slug' => static::slug(),
                 'meta' => static::meta(),
                 'schema' => collect(static::schema())->map->toArray()->all(),
             ],
         ]))
         ->name($panel->id . "." . static::slug());
+
+        foreach (static::schema() as $component) {
+            if ($component instanceof \FlexibleApp\Panel\Components\Form) {
+                $component->registerSubmitRoute($panel, static::slug());
+            }
+        }
     }
 }
