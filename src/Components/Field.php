@@ -8,6 +8,8 @@ abstract class Field extends Component
     public string $label;
     public mixed $default = null;
     public array $rules = [];
+    public bool $reactive = false;
+    public $visibleCondition = null;
 
     public function __construct(string $name)
     {
@@ -33,8 +35,38 @@ abstract class Field extends Component
         return $this;
     }
 
-    public function getValidationRule(): ?array
+    public function reactive(bool $state = true): static
     {
-        return $this->rules ? [$this->name => $this->rules] : null;
+        $this->reactive = $state;
+        return $this;
+    }
+
+    // ✅ This is the correct new method name
+    public function visibleWhen($condition): static
+    {
+        $this->visibleCondition = $condition;
+        return $this;
+    }
+
+    public function isVisible(array $data = []): bool
+    {
+        if ($this->visibleCondition) {
+            return (bool) call_user_func($this->visibleCondition, $data);
+        }
+
+        return $this->visible;
+    }
+
+    public function toArray(): array
+    {
+        return [
+            'type' => class_basename(static::class),
+            'name' => $this->name,
+            'label' => $this->label,
+            'default' => $this->default,
+            'rules' => $this->rules,
+            'reactive' => $this->reactive,
+            'visible' => $this->isVisible(request()->all()),
+        ];
     }
 }

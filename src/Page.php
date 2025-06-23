@@ -60,9 +60,12 @@ abstract class Page
         ]))
         ->name($panel->id . "." . static::slug());
 
+        // dd(static::schema());
+
         foreach (static::schema() as $component) {
             if ($component instanceof \FlexibleApp\Panel\Components\Form) {
                 $component->registerSubmitRoute($panel, static::slug());
+                $component->registerSchemaRoute($panel, static::slug());
             }
         }
     }

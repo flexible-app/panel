@@ -14,14 +14,8 @@ class Input extends Field
 
     public function toArray(): array
     {
-        return [
-            'type' => 'Input',
-            'name' => $this->name,
-            'label' => $this->label,
+        return array_merge(parent::toArray(), [
             'placeholder' => $this->placeholder,
-            'default' => $this->default,
-            'rules' => $this->rules,
-            'visible' => $this->visible,
-        ];
+        ]);
     }
 }
