@@ -58,14 +58,11 @@ abstract class Page
                 'schema' => collect(static::schema())->map->toArray()->all(),
             ],
         ]))
-        ->name($panel->id . "." . static::slug());
-
-        // dd(static::schema());
+        ->name($panel->name . "." . static::slug());
 
         foreach (static::schema() as $component) {
-            if ($component instanceof \FlexibleApp\Panel\Components\Form) {
-                $component->registerSubmitRoute($panel, static::slug());
-                $component->registerSchemaRoute($panel, static::slug());
+            if ($component instanceof \FlexibleApp\Panel\Components\Component) {
+                $component->registerRoutes(static::slug(), $panel);
             }
         }
     }

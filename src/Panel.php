@@ -70,7 +70,7 @@ class Panel
                         'assets' => $this->assets
                     ],
                 ]))
-                ->name($this->id);
+                ->name($this->name);
 
                 foreach ($this->pages as $page) {
                     $page::registerRoutes($this);

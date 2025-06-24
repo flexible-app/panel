@@ -3,12 +3,15 @@
 namespace FlexibleApp\Panel\Components;
 
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Closure;
 
 class Table extends Component
 {
     public array $columns = [];
     public array $rows = [];
     public ?array $pagination = null;
+    public array $actions = [];
+    public array $rowsActions = [];
 
     public static function make(...$args): static
     {
@@ -39,8 +42,30 @@ class Table extends Component
         return $this;
     }
 
+    public function actions(array $actions): static
+    {
+        foreach ($actions as $key => $value) {
+            $this->actions[$key] = $value instanceof Closure
+                ? ['type' => 'server', 'handler' => $value]
+                : ['type' => 'client', 'payload' => $value];
+        }
+        return $this;
+    }
+
+    public function rowActions(array $rowActions): static
+    {
+        foreach ($rowActions as $key => $value) {
+            $this->rowActions[$key] = $value instanceof Closure
+                ? ['type' => 'server', 'handler' => $value]
+                : ['type' => 'client', 'payload' => $value];
+        }
+        return $this;
+    }
+
     public function toArray(): array
     {
+        // dd($this->actions);
+
         return [
             'type' => 'Table',
             // 'columns' => $this->columns,
@@ -48,6 +73,15 @@ class Table extends Component
             'rows' => $this->rows,
             'visible' => $this->visible,
             'pagination' => $this->pagination,
+            // 'actions' => $this->actions,
+            'actions' => collect($this->actions)
+                ->map(fn($action, $key) => [
+                    'key' => $key, 
+                    'type' => $action['type'],
+                    'payload' => $action['type'] == 'client' ? $action['payload'] : null,
+                ])
+                ->values()
+                ->all(),
         ];
     }
 }

@@ -49,14 +49,20 @@ class Form extends Component
         return $this;
     }
 
-    public function registerSubmitRoute(Panel $panel, string $slug): void
+    public function registerRoutes(string $slug, Panel $panel): void
+    {
+        $this->registerSchemaRoute($slug, $panel);
+        $this->registerSubmitRoute($slug, $panel);
+    }
+
+    public function registerSubmitRoute(string $slug, Panel $panel): void
     {
         if (!$this->shouldRegisterSubmitRoute || !$this->name) {
             return;
         }
 
-        Route::post("$slug/forms/{name}", function ($name) {
-            $entry = static::$handlers[$name] ?? null;
+        Route::post("$slug/forms/{$this->name}", function () {
+            $entry = static::$handlers[$this->name] ?? null;
 
             if (!$entry || !isset($entry['form'], $entry['callback'])) {
                 abort(404, 'Form handler not found.');
@@ -66,6 +72,14 @@ class Form extends Component
             $form = $entry['form'];
             $callback = $entry['callback'];
 
+            // Build the data array with request values or defaults
+            $data = [];
+            foreach ($form->schema as $field) {
+                if ($field instanceof Field) {
+                    $data[$field->name] = request()->input($field->name, $field->default);
+                }
+            }
+
             // Build validation rules
             $rules = [];
             foreach ($form->schema as $field) {
@@ -74,22 +88,15 @@ class Form extends Component
                 }
             }
 
-            // Validate request
-            $validated = request()->validate($rules);
+            // Validate merged $data (request + defaults)
+            validator($data, $rules)->validate();
 
-            // Merge with all other request data (even those without rules)
-            $data = array_merge($validated, request()->only(
-                collect($form->schema)
-                    ->filter(fn ($field) => $field instanceof Field)
-                    ->map(fn ($field) => $field->name)
-                    ->toArray()
-            ));
-
+            // Pass full $data to the callback
             return call_user_func($callback, $data);
         })->name("panel.form.submit.{$this->name}");
     }
 
-    public function registerSchemaRoute(Panel $panel, string $slug): void
+    public function registerSchemaRoute(string $slug, Panel $panel, ): void
     {
         if (!$this->shouldRegisterSubmitRoute || !$this->name) {
             return;
@@ -104,13 +111,23 @@ class Form extends Component
 
             /** @var Form $form */
             $form = $entry['form'];
-            $form->fill(request()->all());
 
-            return back()->with('schema', array_map(fn($component) => $component->toArray(), $form->schema));
+            // Build the data array with request values or defaults
+            $data = [];
+            foreach ($form->schema as $field) {
+                if ($field instanceof Field) {
+                    $data[$field->name] = request()->input($field->name, $field->default);
+                }
+            }
 
-            return [
-                'schema' => array_map(fn($component) => $component->toArray(), $form->schema),
-            ];
+            $schema = array_map(
+                fn($component) => $component instanceof Field
+                    ? $component->toArrayWithData($data)
+                    : $component->toArray(),
+                $form->schema
+            );
+
+            return back()->with('schema', $schema);
         })->name("panel.form.schema.{$this->name}");
     }
 
@@ -123,14 +140,45 @@ class Form extends Component
         }
     }
 
+    public static function fillByName(string $name, array $data = [])
+    {
+        return [
+            'fillByName' => $name
+        ];
+    }
+
     public function toArray(): array
     {
+        // Prefill data with request or default
+        $data = [];
+        foreach ($this->schema as $field) {
+            if ($field instanceof Field) {
+                $data[$field->name] = request()->input($field->name, $field->default);
+            }
+        }
+
         return [
             'type' => 'Form',
             'method' => $this->method,
             'action' => $this->action,
-            'schema' => array_map(fn($component) => $component->toArray(), $this->schema),
+            'schema' => array_map(
+                fn($component) => $component instanceof Field
+                    ? $component->toArrayWithData($data)
+                    : $component->toArray(),
+                $this->schema
+            ),
             'visible' => $this->visible,
         ];
     }
+
+    // public function toArray(): array
+    // {
+    //     return [
+    //         'type' => 'Form',
+    //         'method' => $this->method,
+    //         'action' => $this->action,
+    //         'schema' => array_map(fn($component) => $component->toArray(), $this->schema),
+    //         'visible' => $this->visible,
+    //     ];
+    // }
 }

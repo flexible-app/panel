@@ -69,4 +69,12 @@ abstract class Field extends Component
             'visible' => $this->isVisible(request()->all()),
         ];
     }
+
+    public function toArrayWithData(array $data): array
+    {
+        return array_merge($this->toArray(), [
+            'default' => $data[$this->name] ?? $this->default,
+            'visible' => $this->isVisible($data),
+        ]);
+    }
 }
